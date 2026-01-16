@@ -13,7 +13,6 @@ from PIL import Image
 import cv2
 from ultralytics import YOLO
 
-
 image_path = 'img1.png'
 model_path = 'model.pt'
 

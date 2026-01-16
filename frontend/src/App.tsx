@@ -4,6 +4,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import ImageModel from "./pages/company/ImageModel";
+import VideoModel from "./pages/company/VideoModel";
 
 // Public Pages
 import LandingPage from "./pages/LandingPage";
@@ -46,7 +48,6 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
 
-            {/* Company Admin Routes */}
             <Route path="/company" element={<CompanyLayout />}>
               <Route index element={<CompanyDashboard />} />
               <Route path="employees" element={<Employees />} />
@@ -54,10 +55,11 @@ const App = () => (
               <Route path="cctv" element={<CCTVManagement />} />
               <Route path="reports" element={<Reports />} />
               <Route path="assistant" element={<AIAssistant />} />
+              <Route path="image-model" element={<ImageModel />} />
+              <Route path="video-model" element={<VideoModel />} />
               <Route path="settings" element={<Settings />} />
             </Route>
 
-            {/* Platform Admin Routes */}
             <Route path="/platform" element={<PlatformLayout />}>
               <Route index element={<PlatformDashboard />} />
               <Route path="companies" element={<Companies />} />

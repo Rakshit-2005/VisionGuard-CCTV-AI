@@ -33,13 +33,16 @@ const navigation = [
 ];
 
 export function PlatformLayout() {
-  const { user, logout } = useAuth();
+  const { user, logout, loading } = useAuth();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  if (loading) return null;
 
   if (!user || user.role !== 'platform_admin') {
     return <Navigate to="/login" replace />;
   }
+
 
   return (
     <div className="h-screen bg-background flex overflow-hidden">

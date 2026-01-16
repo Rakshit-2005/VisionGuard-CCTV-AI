@@ -17,7 +17,8 @@ import {
   Shield,
   Bell,
   ChevronDown,
-} from 'lucide-react';
+  Image, 
+  Film } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -33,21 +34,23 @@ const navigation = [
   { name: 'Employees', href: '/company/employees', icon: Users },
   { name: 'Safety Violations', href: '/company/violations', icon: AlertTriangle },
   { name: 'CCTV Management', href: '/company/cctv', icon: Video },
+  { name: 'Image Model', href: '/company/image-model', icon: Image },
+  { name: 'Video Model', href: '/company/video-model', icon: Film },
   { name: 'Reports & Analytics', href: '/company/reports', icon: BarChart3 },
   { name: 'AI Safety Assistant', href: '/company/assistant', icon: Bot },
   { name: 'Settings', href: '/company/settings', icon: Settings },
 ];
 
 export function CompanyLayout() {
-  const { user, logout } = useAuth();
+  const { user, logout, loading } = useAuth();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  if (loading) return null;
 
   if (!user || user.role !== 'company_admin') {
     return <Navigate to="/login" replace />;
   }
 
-  const company = mockCompanies.find(c => c.id === user.companyId);
 
   return (
     <div className="h-screen bg-background flex overflow-hidden">
@@ -77,7 +80,7 @@ export function CompanyLayout() {
               <div>
                 <h1 className="font-bold text-lg text-sidebar-foreground">SafetyAI</h1>
                 <p className="text-xs text-muted-foreground truncate max-w-[160px]">
-                  {company?.name || 'Company Dashboard'}
+                  {user.company_name || 'Company Dashboard'}
                 </p>
               </div>
             </div>
