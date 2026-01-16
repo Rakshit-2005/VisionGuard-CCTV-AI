@@ -10,7 +10,6 @@ import { apiRequest } from '@/lib/api';
 /* =========================
    Types
 ========================= */
-
 export interface User {
   company_name: string;
   reg_no: string;
@@ -18,8 +17,6 @@ export interface User {
   admin_email: string;
   industry_type: string;
   role: 'company_admin' | 'platform_admin';
-
-  // normalized fields (USED BY UI)
   name: string;
   email: string;
 }

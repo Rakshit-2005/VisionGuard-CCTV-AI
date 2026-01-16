@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -20,7 +20,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { mockEmployees, Employee } from '@/lib/mockData';
+import { Employee } from '@/lib/mockData';
 import { employeesApi } from '@/lib/demoApi';
 import {
   Users,
@@ -47,11 +47,10 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 
 export default function Employees() {
+  const [viewEmployee, setViewEmployee] = useState<any | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
-  const [employees, setEmployees] = useState(
-    mockEmployees.filter(e => e.companyId === user?.companyId)
-  );
+  const [employees, setEmployees] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -61,6 +60,14 @@ export default function Employees() {
     employeeId: '',
     department: '',
   });
+  const [imageBase64, setImageBase64] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user?.company_name) return;
+    fetch(`http://localhost:8000/employee/${user.company_name}`)
+      .then(res => res.json())
+      .then(setEmployees);
+  }, [user?.company_name]);
 
   const filteredEmployees = employees.filter(emp => {
     const matchesSearch =
@@ -83,31 +90,52 @@ export default function Employees() {
 
     setIsLoading(true);
     try {
-      const employee = await employeesApi.create({
-        employeeId: newEmployee.employeeId,
-        name: newEmployee.name,
-        department: newEmployee.department,
-        companyId: user?.companyId || '',
-        complianceStatus: 'unknown',
+      const res = await fetch("http://localhost:8000/employee", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: newEmployee.name,
+          employeeId: newEmployee.employeeId,
+          department: newEmployee.department,
+          company_name: user?.company_name,
+          complianceStatus: "unknown",
+          imageBase64,
+        }),
       });
 
-      setEmployees([...employees, employee]);
+      if (!res.ok) {
+        const text = await res.text(); // avoid json crash
+        throw new Error(`Request failed (${res.status}): ${text}`);
+      }
+
+      const employee = await res.json();
+
+      setEmployees(prev => [...prev, employee]);
       setNewEmployee({ name: '', employeeId: '', department: '' });
       setAddDialogOpen(false);
-      
+
       toast({
         title: 'Employee Added',
         description: `${employee.name} has been added successfully.`,
       });
-    } catch (error) {
+
+    } catch (error: any) {
+      console.error(error);
+
       toast({
         title: 'Error',
-        description: 'Failed to add employee. Please try again.',
+        description:
+          error.message.includes('403')
+            ? 'Not authorized to add employee'
+            : 'Failed to add employee',
         variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
     }
+
   };
 
   const handleBulkUpload = async () => {
@@ -116,7 +144,7 @@ export default function Employees() {
       // Create a mock file for demo
       const mockFile = new File([''], 'employees.csv');
       const result = await employeesApi.bulkUpload(mockFile);
-      
+
       toast({
         title: 'Bulk Upload Complete',
         description: `${result.count} employees imported successfully.`,
@@ -155,6 +183,8 @@ export default function Employees() {
     nonCompliant: employees.filter(e => e.complianceStatus === 'non-compliant').length,
     unknown: employees.filter(e => e.complianceStatus === 'unknown').length,
   };
+
+
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -230,6 +260,24 @@ export default function Employees() {
                     </SelectContent>
                   </Select>
                 </div>
+                <div className="space-y-2">
+                  <Label>Employee Photo</Label>
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        setImageBase64(reader.result as string);
+                      };
+                      reader.readAsDataURL(file);
+                    }}
+                  />
+                </div>
+
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setAddDialogOpen(false)}>
@@ -345,8 +393,8 @@ export default function Employees() {
                         emp.complianceStatus === 'compliant'
                           ? 'success'
                           : emp.complianceStatus === 'non-compliant'
-                          ? 'danger'
-                          : 'secondary'
+                            ? 'danger'
+                            : 'secondary'
                       }
                     >
                       {emp.complianceStatus === 'compliant' && (
@@ -375,15 +423,16 @@ export default function Employees() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setViewEmployee(emp)}>
                           <Eye className="w-4 h-4 mr-2" />
                           View Details
                         </DropdownMenuItem>
+
                         <DropdownMenuItem>
                           <Edit className="w-4 h-4 mr-2" />
                           Edit
                         </DropdownMenuItem>
-                        <DropdownMenuItem 
+                        <DropdownMenuItem
                           className="text-danger"
                           onClick={() => handleDeleteEmployee(emp.id, emp.name)}
                         >
@@ -406,6 +455,34 @@ export default function Employees() {
           </div>
         )}
       </div>
+      <Dialog open={!!viewEmployee} onOpenChange={() => setViewEmployee(null)}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Employee Details</DialogTitle>
+          <DialogDescription>
+            {viewEmployee?.name}
+          </DialogDescription>
+        </DialogHeader>
+
+        {viewEmployee?.imageBase64 ? (
+          <img
+            src={viewEmployee.imageBase64}
+            alt="Employee"
+            className="rounded-lg border w-full max-h-[300px] object-contain"
+          />
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            No image available
+          </p>
+        )}
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setViewEmployee(null)}>
+            Close
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
     </div>
   );
 }
