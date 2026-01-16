@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -31,12 +31,13 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
+const STORAGE_KEY = 'cctv_cameras';
 export default function CCTVManagement() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [cameras, setCameras] = useState(
-    mockCameras.filter(c => c.companyId === user?.companyId)
-  );
+  const [cameras, setCameras] = useState<Camera[]>([]);
+
+
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [selectedCamera, setSelectedCamera] = useState<Camera | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -45,7 +46,7 @@ export default function CCTVManagement() {
     location: '',
     streamSource: '',
   });
-
+  const [viewCamera, setViewCamera] = useState<Camera | null>(null);
   const handleAddCamera = async () => {
     if (!newCamera.name || !newCamera.location || !newCamera.streamSource) {
       toast({
@@ -128,6 +129,25 @@ export default function CCTVManagement() {
     inactive: cameras.filter(c => c.status === 'inactive').length,
     maintenance: cameras.filter(c => c.status === 'maintenance').length,
   };
+
+  useEffect(() => {
+    if (!user?.companyId) return;
+
+    const stored = sessionStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      setCameras(JSON.parse(stored));
+    } else {
+      const initial = mockCameras.filter(
+        c => c.companyId === user.companyId
+      );
+      setCameras(initial);
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(initial));
+    }
+  }, [user?.companyId]);
+  useEffect(() => {
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(cameras));
+  }, [cameras]);
+
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -332,17 +352,25 @@ export default function CCTVManagement() {
                   className="flex-1"
                   onClick={(e) => {
                     e.stopPropagation();
-                    window.open(`http://localhost:8000/stream/${camera.id}`, '_blank');
+                    setViewCamera(camera);
                   }}
                 >
                   <Eye className="w-4 h-4 mr-1" />
                   View
                 </Button>
 
-                <Button variant="outline" size="sm" className="flex-1">
-                  <Settings className="w-4 h-4 mr-1" />
-                  Settings
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="flex-1"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCameras(prev => prev.filter(c => c.id !== camera.id));
+                  }}
+                >
+                  Delete
                 </Button>
+
               </div>
             </div>
           </div>
@@ -362,6 +390,27 @@ export default function CCTVManagement() {
           </Button>
         </div>
       )}
+      <Dialog open={!!viewCamera} onOpenChange={() => setViewCamera(null)}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>{viewCamera?.name}</DialogTitle>
+            <DialogDescription>
+              Stream source: {viewCamera?.streamSource}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="aspect-video bg-black">
+            {viewCamera && (
+              <img
+                src={`http://localhost:8000/stream/${viewCamera.id}`}
+                className="w-full h-full object-cover"
+                alt="Camera Stream"
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }
