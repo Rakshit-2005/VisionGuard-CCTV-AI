@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { PPEStatusGroup, PPELabel, PPEType } from '@/components/PPEIcons';
-import { mockViolations } from '@/lib/mockData';
 import {
   AlertTriangle,
   Search,
@@ -27,8 +26,25 @@ export default function Violations() {
   const [searchQuery, setSearchQuery] = useState('');
   const [severityFilter, setSeverityFilter] = useState<string>('all');
   const [ppeFilter, setPpeFilter] = useState<string>('all');
-  
-  const violations = mockViolations.filter(v => v.companyId === user?.companyId);
+  const [violations, setViolations] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!user?.company_name) return;
+
+    setLoading(true);
+    fetch(`http://localhost:8000/violations/${user.company_name}`)
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to fetch violations');
+        return res.json();
+      })
+      .then(setViolations)
+      .catch(err => {
+        console.error(err);
+        setViolations([]);
+      })
+      .finally(() => setLoading(false));
+  }, [user?.company_name]);
 
   const filteredViolations = violations.filter(violation => {
     const matchesSearch =
@@ -142,6 +158,11 @@ export default function Violations() {
           </SelectContent>
         </Select>
       </div>
+      {loading && (
+        <div className="glass-panel py-12 text-center">
+          <p className="text-muted-foreground">Loading violations…</p>
+        </div>
+      )}
 
       {/* Violations List */}
       <div className="space-y-4">

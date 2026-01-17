@@ -8,6 +8,7 @@ from fastapi import FastAPI, HTTPException
 from app.routes.auth import router as auth_router
 from app.routes.company import router as company_router
 from app.routes.employee import router as employee_router
+from app.routes.violations import router as violations_router
 from fastapi.responses import Response
 
 app = FastAPI()
@@ -15,6 +16,7 @@ app = FastAPI()
 app.include_router(auth_router)
 app.include_router(company_router)
 app.include_router(employee_router)
+app.include_router(violations_router)
 
 app.add_middleware(
     CORSMiddleware,
