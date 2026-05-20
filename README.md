@@ -10,6 +10,24 @@ Safety-AI-Detection is a real-time workplace safety monitoring system that combi
 - Reports and summaries for compliance tracking.
 - MongoDB-backed data storage.
 
+## Feature Walkthrough
+
+- Dashboard: compliance KPIs, activity trends, and quick safety status.
+- Employees: employee list and safety activity tracking.
+- Safety Violations: logged incidents with categories and timestamps.
+- CCTV Management: add RTSP cameras, test connectivity, and view live overlays.
+- Image Model: upload images, receive annotated output and detection summary.
+- Video Model: upload video, receive annotated MP4 output.
+- Reports and Analytics: aggregated compliance and violation insights.
+- AI Safety Assistant: explain detections and assist operators with next steps.
+
+## Model and Data Science
+
+- Model: YOLOv9 fine-tuned on a PPE safety dataset.
+- Classes: person, hardhat, safety vest, mask, and no-PPE conditions.
+- Inference: optimized thresholds for real-time CCTV and offline analysis.
+- Outputs: annotated media + structured summaries for audits and reporting.
+
 ## Screenshots
 
 ![Sidebar navigation](images/Screenshot%202026-05-20%20235226.png)
