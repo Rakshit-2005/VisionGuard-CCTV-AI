@@ -75,7 +75,7 @@ export default function CCTVManagement() {
         name: newCamera.name,
         location: newCamera.location,
         streamSource: newCamera.streamSource,
-        companyId: user?.companyId || '',
+        company_name: user?.company_name || '',
         status: 'active',
         lastActivity: new Date().toISOString(),
       });
@@ -131,19 +131,19 @@ export default function CCTVManagement() {
   };
 
   useEffect(() => {
-    if (!user?.companyId) return;
+    if (!user?.company_name) return;
 
     const stored = sessionStorage.getItem(STORAGE_KEY);
     if (stored) {
       setCameras(JSON.parse(stored));
     } else {
       const initial = mockCameras.filter(
-        c => c.companyId === user.companyId
+        c => c.company_name === user.company_name
       );
       setCameras(initial);
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify(initial));
     }
-  }, [user?.companyId]);
+  }, [user?.company_name]);
   useEffect(() => {
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(cameras));
   }, [cameras]);
